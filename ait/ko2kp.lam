@@ -1,4 +1,4 @@
--- showing KP(x) <= KO(x) + 620
+-- showing KP(x) <= KO(x) + 569
 
 \io\p. let
   id = \x. x;
@@ -20,14 +20,14 @@
   --       -> r
   --
   -- (the returned program takes a context defining its free variables)
-  uni = \abs\app.
-    let uni0 = \cnt\xs. xs (\b0\ys. \uni0\cnt.
-      ys (\b1.
-        b0 (uni0 (\v1. b1 (cnt (\ctx. abs (\v2. v1 (\p. p v2 ctx))))
-                          (uni0 (\v2. cnt (\ctx. app (v1 ctx) (v2 ctx))))))
-           (b1 (cnt (\ctx. ctx b1))
-               (\d. uni0 (\v. cnt (\ctx. v (ctx b1))) ys)))) uni0 cnt
-    in uni0;
+  -- parser after int.lam (cons' cells, the variable's code as its lookup,
+  -- skipvar), ported by a9lim
+  uni = \abs\app. (\x. x x) (\x. (\uni0. \cnt.
+      (\next. \xs. xs (\b0\ys. b0 (ys next) (cnt ys (ys ys ys))))
+      (\b1. uni0 (\v1. b1
+          (cnt (\ctx. abs (\v2. v1 (\zx\zy. zx v2 (zy ctx)))))
+          (uni0 (\v2. cnt (\ctx. app (v1 ctx) (v2 ctx)))))))
+    (x x));
 
   -- data T = A (V -> V)  -- abstraction
   --        | V           -- free variable
