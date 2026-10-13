@@ -1,11 +1,21 @@
+-- self-interpreter for binary LC with four primitives
+-- (00 = lambda, 01 = application, 10 = variable zero, 11 = successor): 178 bits
+-- a9lim rebuilt it from 189 bits on the design of int.lam. After its tag
+-- bit a variable's code reads 1^(2n-2) 0, so skipvar (\l. l l l, which skips
+-- every 1 and the first 0) carries over unchanged, and so does the lookup by
+-- the variable's own code, once each environment cell also swallows the
+-- successor tag bit that follows a 1.
 let
-  -- binary LC with 4 primitives (zero and succ for vars) interpreter
-  -- intL cont bits = cont (\free.parsed) unparsed_bits
-  intL = \cont\list.list (\bit0\list1\intL\cont.list1 (\bit1.bit0
-    (intL (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
-                   (intL (\exp2.cont (\args.exp args (exp2 args))))))
-    (bit1 (\x.x(\y.y)) intL (\exp. cont (\args.exp (args bit1))))))
-    intL cont;
+  -- cells skip the succ tag bit that follows each 1 in a variable's code
+  cons4 = \x\y\zx\zy. zx x (zy (\tag\l. l y));
+  skipvar = \l. l l l;
+  intL = (\x. x x) (\x. let intL = x x in
+     \cont.
+       let next = (\bit1.intL (\exp.bit1
+             (cont (\args\arg.exp (cons4 arg args)))
+             (intL (\exp2.cont (\args.exp args (exp2 args))))))
+       in \list.list (\bit0\list1.bit0 (list1 next)
+            (cont list1 (skipvar list1))));
 
   -- loop
   omega = omega;
