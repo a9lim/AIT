@@ -23,14 +23,15 @@ let
   A = \t1\t2. \l\a\v. a t1 t2;
   V = \d.     \l\a\v. v d;
 
-  parseval = \cont\xs.
-    xs (\b0\ys\parseval\cont.ys (\b1. b0
-       (parseval (\t1.(b1 (cont (\ctx. L (\v.t1 (\p.p v ctx))))
-         (parseval (\t2.cont (\ctx. let tc1 = t1 ctx; A1 = A tc1
+  -- parser after int.lam (cons' cells, the variable's code as its lookup,
+  -- skipvar), ported by a9lim
+  parseval = (\x. x x) (\x. (\parseval. \cont.
+      (\next. \xs. xs (\b0\ys. b0 (ys next) (cont ys (ys ys ys))))
+      (\b1. parseval (\t1. b1
+         (cont (\ctx. L (\v. t1 (\zx\zy. zx v (zy ctx)))))
+         (parseval (\t2. cont (\ctx. let tc1 = t1 ctx; A1 = A tc1
            in tc1 (\f. f) (\_\_. A1) (\_. A1) (t2 ctx)))))))
-       (b1 (cont (\ctx. ctx b1))
-           (\d.parseval (\v.cont (\ctx. v (ctx b1))) ys))))
-       parseval cont;
+    (x x));
 
   ser = \t\lvl. caseT t
     -- Lambda: apply to a free variable to further reduce whnf
