@@ -9,11 +9,15 @@ let
   zero = \cont.cont id;
   succ = \n\cont\list.list (\h.n (\pref.cont (\r\z.z h (pref r))));
   -- binary LC interpreter
-  intL = \cont\list.list (\bit0\list1.list1 (\bit1.bit0
-    (intL (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
-                   (intL (\exp2.cont (\args.exp args (exp2 args))))))
-    (bit1 (cont (\args.args bit1))
-         (\list2.intL (\var.cont (\args.var (args bit1))) list1))));
+  -- parser after int.lam (cons' cells, the variable's code as its lookup,
+  -- skipvar), ported by a9lim
+  intL = (\x. x x) (\x. let intL = x x in
+     \cont.
+       let next = (\bit1.intL (\exp.bit1
+             (cont (\args\arg.exp (\zx\zy. zx arg (zy args))))
+             (intL (\exp2.cont (\args.exp args (exp2 args))))))
+       in \list.list (\bit0\list1.bit0 (list1 next)
+            (cont list1 (list1 list1 list1))));
   -- binary LC universal machine allowing open programs
   uniL1 = intL (\x.x x);
   -- read varables of the form 1 1^k 0
