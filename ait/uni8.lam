@@ -1,21 +1,28 @@
-let
-  -- binary LC interpreter
-  -- int8 cont bits bytes = cont (\free.parsed) unparsed_bytes
-  int8 = \cont\bits.bits (\bit0\bits1\z.bits1 (\bit1\bits2\z.(\cont.bit0
-    (int8 (\exp.bit1 (cont (\args\arg.exp (\z.z arg args)))
-                   (int8 (\exp2.cont (\args.exp args (exp2 args))))) bits2)
-    (bit1 (cont (\args.args bit1) bits2)
-         (int8 (\var.cont (\args.var (args bit1))) bits1))) cont)
-      (\bytes.bytes (\byte.int8 cont (\z.z bit0 byte))))
-    (\bytes.bytes (int8 cont));
-  
-  -- loop
-  omega = omega;
-
-  -- binary LC universal machine for closed programs
-  uni8 = \bytes.bytes (int8 (\exp\bits.exp omega))
-  
-in uni8
+-- BLC8 universal machine for closed programs: 321 bits (41 bytes)
+-- a9lim reduced it from 355 bits (344 for the IOCCC uni8.Blc):
+-- every bit is read through one reader, get, which refills from the next
+-- byte when the current one runs out. A refill always lands on a fresh byte
+-- of eight bits, so get never needs to refill twice and is not recursive.
+-- Variables keep the Scott-pair environment, re-entering int8 with the
+-- second bit pushed back.
+\bytes.bytes (
+let dbl = \x.x x
+in
+  (dbl (\self.
+    (\get\int8\cont.get (\b.get (\c\tail.b
+      (int8 (\exp.c
+        (cont (\args\arg.exp (\z.z arg args)))
+        (int8 (\exp2.cont (\args.exp args (exp2 args))))) tail)
+      (c (cont (\args.args c) tail)
+         (int8 (\var.cont (\args.var (args c)))
+               (\f.f c tail))))))
+    -- get k bits = k bit bits', reading the next byte when bits is nil
+    (\k. (\h\bits. bits h (\bytes.bytes (\byte. byte h byte))) (\b\tail\ignored.k b tail))
+    (self self))
+    -- free variables diverge in the base environment dbl dbl.
+    -- (\x.x) instead gives a non-strict machine of 300 bits (38 bytes):
+    -- cont exp bits bytes = exp bits bytes = M bytes for closed M
+    (\exp\bits.exp (dbl dbl))))
 
 -- test with
 -- cat id.Blc id.lam | ./blc run8 uni8.lam
