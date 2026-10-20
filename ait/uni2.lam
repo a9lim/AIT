@@ -32,10 +32,10 @@ let
 
 
   -- loop
-  omega = fix id;            -- 18 bits
+  omega = fix fix;           -- no head normal form
 
   -- binary LC universal machine for closed programs
-  uni2 = int2 (\z.z omega);  -- 333 bits
+  uni2 = int2 (\z.z omega);  -- 332 bits
   -- save some bits by assuming closed programs
   -- uni2 = int2 (\z. z z);  -- 321 bits
 
