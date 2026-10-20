@@ -16,8 +16,7 @@ let
        let next = (\bit1.intL (\exp.bit1
              (cont (\args\arg.exp (\zx\zy. zx arg (zy args))))
              (intL (\exp2.cont (\args.exp args (exp2 args))))))
-       in \list.list (\bit0\list1.bit0 (list1 next)
-            (cont list1 (list1 list1 list1))));
+       in \list.list (\bit0.bit0 (\list1\rest. rest next) cont) (list list list));
   -- binary LC universal machine allowing open programs
   uniL1 = intL (\x.x x);
   -- read varables of the form 1 1^k 0
