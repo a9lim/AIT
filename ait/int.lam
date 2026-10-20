@@ -4,6 +4,7 @@
 -- by drastically optimizing it from 206 bits down to 170 bits using
 -- the seemingly magical cons' and skipvar below
 -- Sean Palmer further optimized by 2 bits
+-- and skipping the whole stream before dispatch saves 3 more
 
 let
   -- binary LC interpreter
@@ -19,12 +20,16 @@ let
   -- skips a variable encoding (e.g. skipvar "1110..." = "...") based on:
   -- (1:l) (1:l) = (1:l) 1 l = l l
   -- (0:l) (0:l) = (0:l) 0 l = 0 l
+  -- more generally it skips past the first 0, so applied to the whole stream
+  -- before dispatch it is right for both cases:
+  -- skipvar (0:l) = l, which the zero branch reads, and
+  -- skipvar (1:var) = the rest after the variable, which the variable returns;
+  -- while "list H (skipvar list)" hands list1 to the variable case itself
 
   intL = (\x. x x) (\x. let intL = x x in
      \cont.
        let next = (\bit1.intL (\exp.bit1
              (cont (\args\arg.exp (cons' arg args)))
              (intL (\exp2.cont (\args.exp args (exp2 args))))))
-       in \list.list (\bit0\list1.bit0 (list1 next)
-            (cont list1 (skipvar list1))));
-in intL -- size 168 bits
+       in \list.list (\bit0.bit0 (\list1\rest. rest next) cont) (skipvar list));
+in intL -- size 165 bits
