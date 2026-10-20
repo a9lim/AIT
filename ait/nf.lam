@@ -26,7 +26,7 @@ let
   -- parser after int.lam (cons' cells, the variable's code as its lookup,
   -- skipvar), ported by a9lim
   parseval = (\x. x x) (\x. (\parseval. \cont.
-      (\next. \xs. xs (\b0\ys. b0 (ys next) (cont ys (ys ys ys))))
+      (\next. \xs. xs (\b0. b0 (\ys\rest. rest next) cont) (xs xs xs))
       (\b1. parseval (\t1. b1
          (cont (\ctx. L (\v. t1 (\zx\zy. zx v (zy ctx)))))
          (parseval (\t2. cont (\ctx. let tc1 = t1 ctx; A1 = A tc1
