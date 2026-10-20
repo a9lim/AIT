@@ -10,8 +10,8 @@ let
   nil = false;
 
   -- Enabling IFDIRTY replaces some omegas by suitable variables to save space.
-  -- IFDIRTY,  !CPS: 653 bits / CPS: 714
-  -- !IFDIRTY, !CPS: 779 bits / CPS: 793
+  -- IFDIRTY,  !CPS: 651 bits / CPS: 712
+  -- !IFDIRTY, !CPS: 777 bits / CPS: 791
   IFDIRTY = true;
   IFCPS = false;
 
@@ -29,6 +29,7 @@ let
   -- is the variable's value.
   -- Keep the old bit-recording recursion for ps; discard its variable value.
   -- The initial ys captured by cnt stays intact across every unary step.
+  -- The recursion past a unary 1 is bound outside the two arguments it ignores.
   uni = \abs\app.let uni0 = \cnt\ps\xs.
     xs (\b0.let ps0 = \ts.ps (\p.p b0 ts) in
       \ys\uni0\cnt.ys (\b1.
@@ -36,7 +37,7 @@ let
           b0 (uni0 (\v1.(b1 (cnt (\ctx.abs (\v2.v1 (\zx\zy.zx v2 (zy ctx)))))
                            (uni0 (\v2.cnt (\ctx.app (v1 ctx) (v2 ctx)))))))
              (b1 (cnt ys)
-                 (\d\d.uni0 (\v.cnt ys) ps0 ys)) ps1)) uni0 cnt
+                 (let more = uni0 (\v.cnt ys) ps0 ys in \d\d.more)) ps1)) uni0 cnt
   in uni0;
 
   ----------------------------------------------------------------------------
