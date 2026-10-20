@@ -1,28 +1,32 @@
--- BLC8 universal machine for closed programs: 321 bits (41 bytes)
+-- BLC8 universal machine for closed programs: 306 bits (39 bytes)
 -- a9lim reduced it from 355 bits (344 for the IOCCC uni8.Blc):
 -- every bit is read through one reader, get, which refills from the next
 -- byte when the current one runs out. A refill always lands on a fresh byte
 -- of eight bits, so get never needs to refill twice and is not recursive.
--- Variables keep the Scott-pair environment, re-entering int8 with the
--- second bit pushed back.
+-- The parser branches on a code's first bit before reading the second, and
+-- step takes that first bit as an argument: after a variable's tag 11, the
+-- second 1 is also the first bit of the rest of its code, so step re-enters
+-- with it instead of pushing it back onto the stream.
+-- Variables keep the Scott-pair environment.
 \bytes.bytes (
-let dbl = \x.x x
-in
-  (dbl (\self.
-    (\get\int8\cont.get (\b.get (\c\tail.b
+let
+  -- get k bits = k bit bits', reading the next byte when bits is nil
+  get = \k.(\h\bits.bits h (\bytes.bytes (\byte.byte h byte)))
+              (\b\tail\ignored.k b tail);
+  -- step cont b bits parses a term whose first bit b is already read
+  step =
+    let int8 = \cont.get (step cont)
+    in \cont\b.get (\c.b
       (int8 (\exp.c
         (cont (\args\arg.exp (\z.z arg args)))
-        (int8 (\exp2.cont (\args.exp args (exp2 args))))) tail)
-      (c (cont (\args.args c) tail)
-         (int8 (\var.cont (\args.var (args c)))
-               (\f.f c tail))))))
-    -- get k bits = k bit bits', reading the next byte when bits is nil
-    (\k. (\h\bits. bits h (\bytes.bytes (\byte. byte h byte))) (\b\tail\ignored.k b tail))
-    (self self))
-    -- free variables diverge in the base environment dbl dbl.
-    -- (\x.x) instead gives a non-strict machine of 300 bits (38 bytes):
-    -- cont exp bits bytes = exp bits bytes = M bytes for closed M
-    (\exp\bits.exp (dbl dbl))))
+        (int8 (\exp2.cont (\args.exp args (exp2 args))))))
+      (c (cont (\args.args c))
+         (step (\var.cont (\args.var (args c))) c)))
+in
+  -- free variables diverge in the base environment (\x.x x) (\x.x x).
+  -- (\x.x) instead gives a non-strict machine of 283 bits (36 bytes):
+  -- cont exp bits bytes = exp bits bytes = M bytes for closed M
+  get (step (\exp\bits.exp ((\x.x x) (\x.x x)))))
 
 -- test with
 -- cat id.Blc id.lam | ./blc run8 uni8.lam
