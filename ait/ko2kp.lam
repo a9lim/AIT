@@ -1,4 +1,4 @@
--- showing KP(x) <= KO(x) + 569
+-- showing KP(x) <= KO(x) + 566
 
 \io\p. let
   id = \x. x;
@@ -23,7 +23,7 @@
   -- parser after int.lam (cons' cells, the variable's code as its lookup,
   -- skipvar), ported by a9lim
   uni = \abs\app. (\x. x x) (\x. (\uni0. \cnt.
-      (\next. \xs. xs (\b0\ys. b0 (ys next) (cnt ys (ys ys ys))))
+      (\next. \xs. xs (\b0. b0 (\ys\rest. rest next) cnt) (xs xs xs))
       (\b1. uni0 (\v1. b1
           (cnt (\ctx. abs (\v2. v1 (\zx\zy. zx v2 (zy ctx)))))
           (uni0 (\v2. cnt (\ctx. app (v1 ctx) (v2 ctx)))))))
