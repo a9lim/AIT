@@ -1,10 +1,11 @@
 -- self-interpreter for binary LC with four primitives
--- (00 = lambda, 01 = application, 10 = variable zero, 11 = successor): 178 bits
+-- (00 = lambda, 01 = application, 10 = variable zero, 11 = successor): 175 bits
 -- a9lim rebuilt it from 189 bits on the design of int.lam. After its tag
 -- bit a variable's code reads 1^(2n-2) 0, so skipvar (\l. l l l, which skips
 -- every 1 and the first 0) carries over unchanged, and so does the lookup by
 -- the variable's own code, once each environment cell also swallows the
--- successor tag bit that follows a 1.
+-- successor tag bit that follows a 1. As in int.lam, skipvar is applied to
+-- the whole stream before dispatch, where it is right for both cases.
 let
   -- cells skip the succ tag bit that follows each 1 in a variable's code
   cons4 = \x\y\zx\zy. zx x (zy (\tag\l. l y));
@@ -14,8 +15,7 @@ let
        let next = (\bit1.intL (\exp.bit1
              (cont (\args\arg.exp (cons4 arg args)))
              (intL (\exp2.cont (\args.exp args (exp2 args))))))
-       in \list.list (\bit0\list1.bit0 (list1 next)
-            (cont list1 (skipvar list1))));
+       in \list.list (\bit0.bit0 (\list1\rest. rest next) cont) (skipvar list));
 
   -- loop
   omega = omega;
