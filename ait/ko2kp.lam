@@ -10,7 +10,7 @@
 
   -- replace `omega` used as the initial variable context by the closest
   -- variable; this is fine for closed terms as required by KP.
-  -- (IF_DIRTY = false gives 563 bits)
+  -- (IF_DIRTY = false gives 562 bits)
   IF_DIRTY = true;
 
   -- generic evaluator -- really just parser + translation to HOAS
